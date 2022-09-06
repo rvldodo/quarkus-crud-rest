@@ -12,7 +12,7 @@ public class Students {
     @Schema(required = true, example = "Syairah")
     private String firstName;
     @NotNull
-    @Schema(required = true, example = "Putry")
+    @Schema(required = true, example = "Putri")
     private String lastName;
     @NotNull
     @Schema(required = true, example = "20")

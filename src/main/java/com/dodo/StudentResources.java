@@ -45,23 +45,20 @@ public class StudentResources {
         return Response.ok(student).build();
     }
 
-//    @PUT
-//    @Path("{uuid}")
-//    @Consumes(MediaType.APPLICATION_JSON)
-//    @Produces(MediaType.APPLICATION_JSON)
-//    public Response updateStudent(
-//            @PathParam("uuid") UUID uuid,
-//            String firstName,
-//            String lastName,
-//            int age,
-//            String occupation) {
-//        Students student = students.get(uuid);
-//        student.setFirstName(firstName);
-//        student.setLastName(lastName);
-//        student.setAge(age);
-//        student.setOccupation(occupation);
-//        return Response.ok(student).build();
-//    }
+    @PUT
+    @Path("{uuid}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateStudent(
+            @PathParam("uuid") UUID uuid,
+            Students s) {
+        Students student = students.get(uuid);
+        student.setFirstName(s.getFirstName());
+        student.setLastName(s.getLastName());
+        student.setAge(s.getAge());
+        student.setOccupation(s.getOccupation());
+        return Response.ok(student).build();
+    }
 
     // delete a student data in students by uuid
     @DELETE
