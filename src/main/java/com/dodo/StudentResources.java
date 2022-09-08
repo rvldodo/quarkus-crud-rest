@@ -4,14 +4,23 @@ package com.dodo;
 import com.dodo.domain.Students;
 import io.smallrye.common.constraint.NotNull;
 
+import javax.inject.Inject;
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+import javax.validation.Valid;
+import javax.validation.Validator;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Path("/students")
 @Produces(MediaType.APPLICATION_JSON)
 public class StudentResources {
+
+    @Inject
+    Validator validator;
 
     public Map<UUID,Students> students = new HashMap();
 
@@ -28,9 +37,14 @@ public class StudentResources {
     @Path("/new")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response saveStudents(@NotNull Students s) {
-        students.put(s.getUuid(), s);
-        return Response.ok(students).build();
+    public Result saveStudents(@Valid @NotNull Students s) {
+        Set<ConstraintViolation<Students>> violations = validator.validate(s);
+        if(students.isEmpty()){
+            students.put(s.getUuid(), s);
+            return new Result("Data added");
+        } else {
+            return new Result(violations.stream().map(cv -> cv.getMessage()).collect(Collectors.joining(", ")));
+        }
     }
 
     // call the student from students by uuid
@@ -51,13 +65,19 @@ public class StudentResources {
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateStudent(
             @PathParam("uuid") UUID uuid,
-            Students s) {
+            @Valid Students s) {
         Students student = students.get(uuid);
-        student.setFirstName(s.getFirstName());
-        student.setLastName(s.getLastName());
-        student.setAge(s.getAge());
-        student.setOccupation(s.getOccupation());
-        return Response.ok(student).build();
+        try{
+            student.setFirstName(s.getFirstName());
+            student.setLastName(s.getLastName());
+            student.setAge(s.getAge());
+            student.setOccupation(s.getOccupation());
+            Set<ConstraintViolation<Students>> violations = validator.validate(student);
+            return Response.ok(student).build();
+        } catch (ConstraintViolationException e) {
+            return Response.status(400, "Cannot update the data").build();
+        }
+
     }
 
     // delete a student data in students by uuid
@@ -67,5 +87,30 @@ public class StudentResources {
     public Response deleteStudent(UUID uuid){
         students.remove(uuid);
         return Response.ok(students).build();
+    }
+
+    /*
+    * VALIDATOR */
+    public static class Result{
+        private String message;
+        private Boolean success;
+
+        Result (String message){
+            this.success = true;
+            this.message = message;
+        }
+
+        Result(Set<? extends ConstraintViolation<?>> violations){
+            this.success = false;
+            this.message = violations.stream().map(cv -> cv.getMessage()).collect(Collectors.joining(", "));
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public Boolean isSuccess() {
+            return success;
+        }
     }
 }
